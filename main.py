@@ -1,13 +1,15 @@
 import os
-import openai
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from openai import OpenAI
 
+# Переменные среды
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OWNER_ID = int(os.getenv("OWNER_ID"))
 
-openai.api_key = OPENAI_API_KEY
+# Инициализация OpenAI клиента
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID:
@@ -22,11 +24,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4-turbo",
-            messages=[{"role": "user", "content": user_input}]
+            messages=[
+                {"role": "user", "content": user_input}
+            ]
         )
-        answer = response["choices"][0]["message"]["content"]
+        answer = response.choices[0].message.content
         await update.message.reply_text(answer)
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {e}")
